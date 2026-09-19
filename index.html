@@ -13,12 +13,10 @@
         h1 { font-size: 1.1rem; color: #38bdf8; white-space: nowrap; }
         
         .header-controls { display: flex; align-items: center; gap: 10px; }
-        .status { font-size: 0.85rem; padding: 6px 12px; border-radius: 4px; background-color: #ca8a04; color: #fff; font-weight: bold; }
-        .status.active { background-color: #16a34a; }
+        .status { font-size: 0.85rem; padding: 6px 12px; border-radius: 4px; background-color: #0284c7; color: #fff; font-weight: bold; }
 
-        .switch-btn { background-color: #0284c7; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: 0.2s; }
-        .switch-btn:hover { background-color: #0369a1; }
-        .switch-btn:disabled { background-color: #475569; cursor: not-allowed; }
+        .switch-btn { background-color: #16a34a; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: 0.2s; }
+        .switch-btn:hover { background-color: #15803d; }
 
         .player-container { display: flex; flex: 1; height: calc(100vh - 60px); }
         
@@ -42,8 +40,8 @@
     <header>
         <h1>Web IPTV Player</h1>
         <div class="header-controls">
-            <button id="switch-btn" class="switch-btn" onclick="autoSwitchServer()" disabled>🔄 Otomatik Çalışan Sunucuya Geç</button>
-            <div id="status" class="status">Sunucular Test Ediliyor...</div>
+            <button class="switch-btn" onclick="nextCombo()">🔄 Sıradaki Sunucuya Geç</button>
+            <div id="status" class="status">Sunucu Hazır</div>
         </div>
     </header>
 
@@ -58,7 +56,7 @@
         </div>
 
         <div class="main-player">
-            <div class="info-bar" id="current-stream-info">Arka planda sunucular doğrulanıyor...</div>
+            <div class="info-bar" id="current-stream-info">Bir kanal seçin veya sunucu değiştirin.</div>
             <video id="video" controls autoplay></video>
         </div>
     </div>
@@ -81,9 +79,16 @@
             { username: "GurEyup5858", password: "pF1zg8n2" }
         ];
 
-        let workingServers = [];
-        let activeServerIndex = 0;
-        let selectedStreamId = null;
+        // Tüm Kombinasyon Dizisi
+        let combos = [];
+        DOMAINS.forEach(domain => {
+            ACCOUNTS.forEach(acc => {
+                combos.push({ domain, acc });
+            });
+        });
+
+        let currentComboIndex = 0;
+        let selectedStreamId = 'trt1';
         let hls = null;
 
         const channels = {
@@ -95,87 +100,25 @@
                 { name: "Show TV HD", id: "showtv" },
                 { name: "BeIN Sports 1", id: "bs1" }
             ],
-            movies: [
-                { name: "Aksiyon Filmi (1080p)", id: "movie1" },
-                { name: "Komedi Filmi", id: "movie2" }
-            ],
-            series: [
-                { name: "Yerli Dizi S01E01", id: "series1" }
-            ]
+            movies: [{ name: "Aksiyon Filmi", id: "movie1" }],
+            series: [{ name: "Yerli Dizi S01E01", id: "series1" }]
         };
 
         let currentCategory = 'live';
 
-        document.addEventListener("DOMContentLoaded", async () => {
+        document.addEventListener("DOMContentLoaded", () => {
             renderChannels();
-            await scanAndFilterServers();
+            updateStatus();
         });
 
-        async function scanAndFilterServers() {
-            const statusEl = document.getElementById("status");
-            const infoEl = document.getElementById("current-stream-info");
-
-            let testedCount = 0;
-            const totalCombos = DOMAINS.length * ACCOUNTS.length;
-
-            for (const domain of DOMAINS) {
-                for (const acc of ACCOUNTS) {
-                    testedCount++;
-                    statusEl.textContent = `Test Ediliyor: ${testedCount}/${totalCombos}`;
-                    
-                    const isAlive = await testConnection(domain, acc);
-                    if (isAlive) {
-                        workingServers.push({ domain, acc });
-                    }
-                }
-            }
-
-            if (workingServers.length > 0) {
-                statusEl.textContent = `Aktif Sunucu: ${workingServers.length} Adet`;
-                statusEl.classList.add("active");
-                document.getElementById("switch-btn").disabled = false;
-                infoEl.textContent = "Çalışan sunucular hazır. İzlemek istediğiniz kanalı seçin.";
-                updateActiveServerDisplay();
-            } else {
-                statusEl.textContent = "Çalışan Sunucu Bulunamadı";
-                statusEl.style.backgroundColor = "#dc2626";
-                infoEl.textContent = "Bağlantı sağlanamadı. Sunucular kapalı veya engelli olabilir.";
-            }
+        function updateStatus() {
+            const current = combos[currentComboIndex];
+            document.getElementById("status").textContent = `Deneniyor (${currentComboIndex + 1}/${combos.length}): ${current.domain}`;
         }
 
-        function testConnection(domain, acc) {
-            return new Promise((resolve) => {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-                fetch(`http://${domain}/live/${acc.username}/${acc.password}/trt1.m3u8`, {
-                    method: 'HEAD',
-                    mode: 'no-cors',
-                    signal: controller.signal
-                })
-                .then(() => {
-                    clearTimeout(timeoutId);
-                    resolve(true);
-                })
-                .catch(() => {
-                    clearTimeout(timeoutId);
-                    resolve(false);
-                });
-            });
-        }
-
-        function updateActiveServerDisplay() {
-            if (workingServers.length === 0) return;
-            const current = workingServers[activeServerIndex];
-            document.getElementById("status").textContent = `Aktif: ${current.domain} (${activeServerIndex + 1}/${workingServers.length})`;
-        }
-
-        function autoSwitchServer() {
-            if (workingServers.length === 0) return;
-
-            activeServerIndex = (activeServerIndex + 1) % workingServers.length;
-            updateActiveServerDisplay();
-
+        function nextCombo() {
+            currentComboIndex = (currentComboIndex + 1) % combos.length;
+            updateStatus();
             if (selectedStreamId) {
                 playStream(selectedStreamId);
             }
@@ -184,7 +127,6 @@
         function renderChannels() {
             const container = document.getElementById("channel-list");
             container.innerHTML = "";
-
             const items = channels[currentCategory] || [];
             items.forEach(ch => {
                 const div = document.createElement("div");
@@ -192,7 +134,6 @@
                 div.textContent = ch.name;
                 div.onclick = () => {
                     selectedStreamId = ch.id;
-                    document.getElementById("current-stream-info").textContent = "Oynatılıyor: " + ch.name;
                     playStream(ch.id);
                 };
                 container.appendChild(div);
@@ -207,30 +148,33 @@
         }
 
         function playStream(streamId) {
-            if (workingServers.length === 0) {
-                alert("Henüz çalışan bir sunucu tespit edilemedi.");
-                return;
-            }
-
             const video = document.getElementById('video');
-            const current = workingServers[activeServerIndex];
-
+            const current = combos[currentComboIndex];
             const streamUrl = `http://${current.domain}/live/${current.acc.username}/${current.acc.password}/${streamId}.m3u8`;
+
+            document.getElementById("current-stream-info").textContent = `Bağlanılıyor: ${current.domain} | Kullanıcı: ${current.acc.username}`;
 
             if (Hls.isSupported()) {
                 if (hls) hls.destroy();
                 hls = new Hls({
-                    manifestLoadingTimeOut: 4000,
-                    fragLoadingTimeOut: 4000
+                    manifestLoadingTimeOut: 3000,
+                    fragLoadingTimeOut: 3000
                 });
                 hls.loadSource(streamUrl);
                 hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    video.play();
+                    document.getElementById("current-stream-info").textContent = `Yayında: ${current.domain}`;
+                });
 
+                // Oynatıcı hata alırsa takılmadan otomatik sıradakine geç
                 hls.on(Hls.Events.ERROR, function (event, data) {
                     if (data.fatal) {
-                        document.getElementById("current-stream-info").textContent = "Yayın yüklenemedi, sıradaki çalışan sunucu deneniyor...";
-                        autoSwitchServer();
+                        document.getElementById("current-stream-info").textContent = `Sunucu yanıt vermedi. Sıradaki deneniyor... (${currentComboIndex + 1}/${combos.length})`;
+                        setTimeout(() => {
+                            nextCombo();
+                        }, 1000);
                     }
                 });
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {

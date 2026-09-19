@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M3U IPTV Sunucu ve Liste Yönetimi</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>M3U Sunucu Yönetim & Bağlantı Paneli</h1>
+        
+        <div class="card">
+            <h2>Aktif Durum & Kontrol</h2>
+            <p>Seçili Sunucu: <strong id="active-domain">Kontrol Ediliyor...</strong></p>
+            <p>Durum: <span id="status-badge" class="badge warning">Test Ediliyor</span></p>
+            <div class="button-group">
+                <button id="btn-check" onclick="checkAllDomains()">Domainleri Test Et</button>
+                <button id="btn-download" onclick="downloadActiveM3u()" disabled>Aktif M3U İndir</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Yedek Sunucu Listesi (Yan Domainler)</h2>
+            <ul id="domain-list"></ul>
+        </div>
+
+        <div class="card">
+            <h2>M3U Link Üretici</h2>
+            <div class="form-group">
+                <label for="user-select">Kullanıcı Seçin:</label>
+                <select id="user-select" onchange="generateUserM3u()"></select>
+            </div>
+            <div class="form-group">
+                <label for="m3u-output">Üretilen M3U Linki:</label>
+                <input type="text" id="m3u-output" readonly>
+                <button onclick="copyLink()">Kopyala</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

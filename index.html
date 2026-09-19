@@ -72,6 +72,8 @@
     </div>
 
     <script>
+        const TIMEOUT_MS = 4000; // Timeout 4 saniye olarak ayarlandı
+
         const DOMAINS = [
             "tekno072.xyz:2095", "vip-flying.xyz:2095", "mrtrb.xyz:2095", "4kblue8k.xyz:2095",
             "maxgoldx.xyz:2095", "ediztv.yeninesiltv.org:2095", "euteck.xyz:2095", "xx1907xx.mysynology.net:2095",
@@ -163,10 +165,8 @@
             renderChannels();
         }
 
-        // VLC Üzerinden Yayını Başlatma
         function openInVLC() {
             const streamUrl = getCurrentStreamUrl();
-            // vlc:// protokolü bilgisayar/mobilde varsayılan VLC uygulamasını tetikler
             window.location.href = "vlc://" + streamUrl;
         }
     </script>

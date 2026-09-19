@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web IPTV Player - Akıllı Sunucu Testi</title>
-    <!-- HLS Video Player Kütüphanesi -->
+    <title>Web IPTV Player</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
@@ -23,7 +22,6 @@
 
         .player-container { display: flex; flex: 1; height: calc(100vh - 60px); }
         
-        /* Sol Menü */
         .sidebar { width: 300px; background-color: #1e293b; border-right: 1px solid #334155; display: flex; flex-direction: column; }
         .tabs { display: flex; border-bottom: 1px solid #334155; }
         .tab-btn { flex: 1; padding: 10px; background: none; border: none; color: #94a3b8; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
@@ -33,7 +31,6 @@
         .channel-item { padding: 12px; margin-bottom: 6px; background-color: #0f172a; border-radius: 6px; cursor: pointer; font-size: 0.9rem; border: 1px solid #334155; transition: 0.2s; }
         .channel-item:hover { background-color: #0284c7; border-color: #38bdf8; }
 
-        /* Sağ Taraf: Video Player */
         .main-player { flex: 1; background-color: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
         video { width: 100%; height: 100%; max-height: 100%; object-fit: contain; }
         
@@ -45,13 +42,12 @@
     <header>
         <h1>Web IPTV Player</h1>
         <div class="header-controls">
-            <button id="switch-btn" class="switch-btn" onclick="autoSwitchServer()" disabled>🔄 Çalışan Sunucuyu Değiştir</button>
-            <div id="status" class="status">Kombinasyonlar Test Ediliyor...</div>
+            <button id="switch-btn" class="switch-btn" onclick="autoSwitchServer()" disabled>🔄 Otomatik Çalışan Sunucuya Geç</button>
+            <div id="status" class="status">Sunucular Test Ediliyor...</div>
         </div>
     </header>
 
     <div class="player-container">
-        <!-- Sol Panel -->
         <div class="sidebar">
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('live')">Canlı TV</button>
@@ -61,7 +57,6 @@
             <div id="channel-list" class="channel-list"></div>
         </div>
 
-        <!-- Oynatıcı Panel -->
         <div class="main-player">
             <div class="info-bar" id="current-stream-info">Arka planda sunucular doğrulanıyor...</div>
             <video id="video" controls autoplay></video>
@@ -86,7 +81,7 @@
             { username: "GurEyup5858", password: "pF1zg8n2" }
         ];
 
-        let workingServers = []; // Sadece testten geçen aktif sunucu+hesap eşleşmeleri
+        let workingServers = [];
         let activeServerIndex = 0;
         let selectedStreamId = null;
         let hls = null;
@@ -116,7 +111,6 @@
             await scanAndFilterServers();
         });
 
-        // 1. AŞAMA: Sunucu ve Hesap Kombinasyonlarını Önceden Test Etme
         async function scanAndFilterServers() {
             const statusEl = document.getElementById("status");
             const infoEl = document.getElementById("current-stream-info");
@@ -136,27 +130,24 @@
                 }
             }
 
-            // Test Bitti
             if (workingServers.length > 0) {
                 statusEl.textContent = `Aktif Sunucu: ${workingServers.length} Adet`;
                 statusEl.classList.add("active");
                 document.getElementById("switch-btn").disabled = false;
-                infoEl.textContent = "Çalışan sunucular tespit edildi. Lütfen izlemek istediğiniz kanalı seçin.";
+                infoEl.textContent = "Çalışan sunucular hazır. İzlemek istediğiniz kanalı seçin.";
                 updateActiveServerDisplay();
             } else {
-                statusEl.textContent = "Çalışan Sunucu Bulunamadı!";
+                statusEl.textContent = "Çalışan Sunucu Bulunamadı";
                 statusEl.style.backgroundColor = "#dc2626";
-                infoEl.textContent = "CORS veya Bağlantı Engeli nedeniyle sunuculara ulaşılamadı.";
+                infoEl.textContent = "Bağlantı sağlanamadı. Sunucular kapalı veya engelli olabilir.";
             }
         }
 
-        // Hızlı Ping / İstek Testi
         function testConnection(domain, acc) {
             return new Promise((resolve) => {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 saniye zaman aşımı
+                const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-                // İsteği atmak için örnek yayın adresi
                 fetch(`http://${domain}/live/${acc.username}/${acc.password}/trt1.m3u8`, {
                     method: 'HEAD',
                     mode: 'no-cors',
@@ -164,11 +155,11 @@
                 })
                 .then(() => {
                     clearTimeout(timeoutId);
-                    resolve(true); // Yanıt veren sunucu
+                    resolve(true);
                 })
                 .catch(() => {
                     clearTimeout(timeoutId);
-                    resolve(false); // Yanıt vermeyen pasif sunucu
+                    resolve(false);
                 });
             });
         }
@@ -179,11 +170,9 @@
             document.getElementById("status").textContent = `Aktif: ${current.domain} (${activeServerIndex + 1}/${workingServers.length})`;
         }
 
-        // 2. AŞAMA: Sadece Çalışan Havuz İçinde Döndürme
         function autoSwitchServer() {
             if (workingServers.length === 0) return;
 
-            // Sıradaki çalışan sunucuya geç
             activeServerIndex = (activeServerIndex + 1) % workingServers.length;
             updateActiveServerDisplay();
 
@@ -219,7 +208,7 @@
 
         function playStream(streamId) {
             if (workingServers.length === 0) {
-                alert("Henüz çalışan bir sunucu tespit edilemedi veya sunucular kapalı.");
+                alert("Henüz çalışan bir sunucu tespit edilemedi.");
                 return;
             }
 
@@ -240,8 +229,8 @@
 
                 hls.on(Hls.Events.ERROR, function (event, data) {
                     if (data.fatal) {
-                        document.getElementById("current-stream-info").textContent = "Yayın Yüklenemedi. Otomatik olarak sonraki çalışan sunucu deneniyor...";
-                        autoSwitchServer(); // Hata verirse takılmadan diğer çalışan sunucuya sıçra
+                        document.getElementById("current-stream-info").textContent = "Yayın yüklenemedi, sıradaki çalışan sunucu deneniyor...";
+                        autoSwitchServer();
                     }
                 });
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {

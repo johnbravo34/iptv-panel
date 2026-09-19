@@ -12,12 +12,12 @@
         .card { background-color: #1e293b; border-radius: 10px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .status-box { margin-bottom: 15px; padding: 12px; border-radius: 6px; background-color: #0f172a; font-size: 0.9rem; }
         .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; display: inline-block; margin-top: 5px; }
-        .badge.testing { background-color: #ca8a04; color: white; }
         .badge.success { background-color: #16a34a; color: white; }
-        .badge.danger { background-color: #dc2626; color: white; }
-        input[type="text"] { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #475569; background-color: #0f172a; color: #38bdf8; font-weight: bold; margin-top: 10px; font-size: 0.9rem; word-break: break-all; }
+        input[type="text"] { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #475569; background-color: #0f172a; color: #38bdf8; font-weight: bold; margin-top: 10px; font-size: 0.85rem; word-break: break-all; }
         button { background-color: #0284c7; color: white; border: none; padding: 14px; border-radius: 6px; width: 100%; font-weight: bold; margin-top: 12px; cursor: pointer; font-size: 1rem; }
-        button:disabled { background-color: #475569; cursor: not-allowed; }
+        button:hover { background-color: #0369a1; }
+        .alt-btn { background-color: #475569; margin-top: 8px; font-size: 0.85rem; padding: 10px; }
+        .protocol-btn { background-color: #d97706; margin-top: 8px; font-size: 0.85rem; padding: 10px; }
     </style>
 </head>
 <body>
@@ -26,14 +26,17 @@
         
         <div class="card">
             <div class="status-box">
-                <p>Sunucu Durumu: <span id="status-text">Yan domainler taranıyor...</span></p>
-                <span id="status-badge" class="badge testing">Test Ediliyor</span>
+                <p>Aktif Sunucu: <strong id="domain-text">---</strong></p>
+                <p>Protokol: <strong id="protocol-text" style="color:#f59e0b;">HTTP</strong></p>
+                <span class="badge success">Bağlantı Hazır</span>
             </div>
 
-            <label>Aktif Çalışan M3U Linkiniz:</label>
-            <input type="text" id="m3u-output" value="Çalışan sunucu aranıyor..." readonly>
+            <label>M3U Linkiniz:</label>
+            <input type="text" id="m3u-output" readonly>
             
-            <button id="copy-btn" onclick="copyLink()" disabled>Otomatik Linki Kopyala</button>
+            <button onclick="copyLink()">M3U Linkini Kopyala</button>
+            <button class="protocol-btn" onclick="toggleProtocol()">Protokol Değiştir (HTTP / HTTPS)</button>
+            <button class="alt-btn" onclick="nextDomain()">Sonraki Sunucu / Hesabı Dene</button>
         </div>
     </div>
 
@@ -52,67 +55,47 @@
             { username: "efeece", password: "jYaK4ad" },
             { username: "Marvin.", password: "fzAT3ebxRZ" },
             { username: "Meral.keh", password: "y4k61BsQ5G" },
-            { username: "GurEyup5858", password: "pF1zg8n2" },
-            { username: "ftt1123", password: "ftt1409gg00" },
-            { username: "aa6928tv", password: "aa1607yy00" },
-            { username: "Gerdfreebe2", password: "cAyrSqbt" },
-            { username: "Anka01", password: "22.01.2025" }
+            { username: "GurEyup5858", password: "pF1zg8n2" }
         ];
 
-        document.addEventListener("DOMContentLoaded", findWorkingServer);
+        let domainIndex = 0;
+        let accountIndex = 0;
+        let useHttps = false;
 
-        async function testUrl(url) {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 sn zaman aşımı
-                await fetch(url, { method: 'HEAD', mode: 'no-cors', signal: controller.signal });
-                clearTimeout(timeoutId);
-                return true;
-            } catch (e) {
-                return false;
-            }
+        document.addEventListener("DOMContentLoaded", () => {
+            updateM3uLink();
+        });
+
+        function updateM3uLink() {
+            const currentDomain = DOMAINS[domainIndex];
+            const currentAcc = ACCOUNTS[accountIndex];
+            const protocol = useHttps ? "https" : "http";
+            
+            document.getElementById("domain-text").textContent = currentDomain;
+            document.getElementById("protocol-text").textContent = protocol.toUpperCase();
+
+            const m3uUrl = `${protocol}://${currentDomain}/get.php?username=${currentAcc.username}&password=${currentAcc.password}&type=m3u_plus`;
+            document.getElementById("m3u-output").value = m3uUrl;
         }
 
-        async function findWorkingServer() {
-            const statusText = document.getElementById("status-text");
-            const statusBadge = document.getElementById("status-badge");
-            const output = document.getElementById("m3u-output");
-            const copyBtn = document.getElementById("copy-btn");
+        function toggleProtocol() {
+            useHttps = !useHttps;
+            updateM3uLink();
+        }
 
-            // Yan domainleri sırayla tara
-            for (const domain of DOMAINS) {
-                for (const acc of ACCOUNTS) {
-                    const testM3u = `http://${domain}/get.php?username=${acc.username}&password=${acc.password}&type=m3u_plus`;
-                    statusText.textContent = `${domain} kontrol ediliyor...`;
-
-                    const isAlive = await testUrl(testM3u);
-                    
-                    if (isAlive) {
-                        // Çalışan ilk domain ve hesabı bulduğu an durur ve seçer
-                        output.value = testM3u;
-                        statusText.textContent = `Aktif Sunucu Bulundu: ${domain}`;
-                        statusBadge.className = "badge success";
-                        statusBadge.textContent = "Aktif Bağlantı Yapıldı";
-                        copyBtn.disabled = false;
-                        return;
-                    }
-                }
+        function nextDomain() {
+            domainIndex = (domainIndex + 1) % DOMAINS.length;
+            if (domainIndex === 0) {
+                accountIndex = (accountIndex + 1) % ACCOUNTS.length;
             }
-
-            // Bağlantı bulunamazsa ilk varsayılan adresi atar
-            const fallbackM3u = `http://${DOMAINS[0]}/get.php?username=${ACCOUNTS[0].username}&password=${ACCOUNTS[0].password}&type=m3u_plus`;
-            output.value = fallbackM3u;
-            statusText.textContent = "Otomatik Varsayılan Sunucu Seçildi";
-            statusBadge.className = "badge success";
-            statusBadge.textContent = "Hazır";
-            copyBtn.disabled = false;
+            updateM3uLink();
         }
 
         function copyLink() {
             const copyText = document.getElementById("m3u-output");
             copyText.select();
             navigator.clipboard.writeText(copyText.value);
-            alert("Çalışan M3U Linki Kopyalandı!");
+            alert("M3U Linki Kopyalandı!");
         }
     </script>
 </body>

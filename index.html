@@ -3,38 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M3U IPTV Sunucu ve Liste Yönetimi</title>
+    <title>IPTV M3U Bağlantı Paneli</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>M3U Sunucu Yönetim & Bağlantı Paneli</h1>
+        <h1>IPTV Bağlantı Paneli</h1>
         
         <div class="card">
-            <h2>Aktif Durum & Kontrol</h2>
-            <p>Seçili Sunucu: <strong id="active-domain">Kontrol Ediliyor...</strong></p>
-            <p>Durum: <span id="status-badge" class="badge warning">Test Ediliyor</span></p>
-            <div class="button-group">
-                <button id="btn-check" onclick="checkAllDomains()">Domainleri Test Et</button>
-                <button id="btn-download" onclick="downloadActiveM3u()" disabled>Aktif M3U İndir</button>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>Yedek Sunucu Listesi (Yan Domainler)</h2>
-            <ul id="domain-list"></ul>
+            <h2>Aktif Sunucu Durumu</h2>
+            <p>Seçili Sunucu: <strong id="active-domain">Yükleniyor...</strong></p>
+            <p>Durum: <span id="status-badge" class="badge success">Aktif</span></p>
         </div>
 
         <div class="card">
             <h2>M3U Link Üretici</h2>
             <div class="form-group">
-                <label for="user-select">Kullanıcı Seçin:</label>
+                <label for="user-select">Kullanıcı Hesabı Seçin:</label>
                 <select id="user-select" onchange="generateUserM3u()"></select>
             </div>
             <div class="form-group">
-                <label for="m3u-output">Üretilen M3U Linki:</label>
+                <label for="m3u-output">Otomatik Oluşturulan M3U Linki:</label>
                 <input type="text" id="m3u-output" readonly>
-                <button onclick="copyLink()">Kopyala</button>
+                <button onclick="copyLink()">Linki Kopyala</button>
             </div>
         </div>
     </div>
